@@ -1,0 +1,116 @@
+---
+title: 'Statistical Inference: Peer Graded Assigment'
+author: "Wayne Heller"
+date: "April 22, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+Part 1 of this analysis compares a simulated sample mean and variance for an exponential distribution to the theoretical values, and to the means of 40 samples.
+
+Part 2 is...
+
+### Simulations
+#### Exponential distribution with 1,000 simulated observations
+```{r cache=TRUE}
+        seed = 12345
+        nosim <- 1000                 # number of simulated values
+        lambda <-0.2
+        x.dist <- rexp(nosim, lambda) # simulated exponential distribution
+        dat <- data.frame(x = x.dist) # create a dataframe from the values for plotting
+        x.mean = mean(dat$x)          # mean of the simulated distribution
+        x.var = var(dat$x)            # variance of the simulated distribution
+```
+
+#### Distribution of Means from 1,000 simulations of 40 observations each
+```{r cache=TRUE}
+        nsize <- 40                   # number of observations in 1 simulation
+        x.dist <- rexp(nosim * nsize, lambda) # simulated exponential distribution
+        x.avg = apply(matrix(x.dist, nosim), 1, mean)
+        dat.avg <- data.frame(x = x.avg)
+        x.avg.mean = mean(dat.avg$x)  # simulated mean
+        x.avg.var = var(dat.avg$x)    # simulated variance
+        x.avg.mean.theoretical = 1/lambda # theoretical mean
+        x.avg.var.theoretical = (1/lambda^2)/nsize
+```
+
+### Sample Mean and Variance vs. Theoretical
+```{r echo=FALSE}
+        library(ggplot2)
+        g <- ggplot(dat, aes(x = x, fill="red")) 
+        g <- g + geom_histogram(alpha = .20, binwidth=1, colour = "black") 
+        g <- g + geom_vline(xintercept=x.mean) 
+        g <- g + annotate(geom = "text", x=10, y=100, label=paste0("simulated mean=", as.character(round(x.mean,digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        
+        g <- g + annotate(geom = "text", x=10, y=90, label=paste0("theoretical mean=", as.character(round(1/lambda,digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        
+        g <- g + annotate(geom = "text", x=10, y=130, label=paste0("simulated variance=", as.character(round(x.var, digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        
+        g <- g + annotate(geom = "text", x=10, y=120, label=paste0("theoretical variance=", as.character(round(1/lambda^2, digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        g <- g + theme(legend.position="none")
+        g <- g + labs(title = paste("Simulated Exponential Distribution with lambda=", as.character(lambda), "and", as.character(nosim), "Observations"))
+        print(g)
+        
+print(paste("The Sample Mean of", as.character(round(x.mean,digits=2)), "approximates the theoretical mean 1/lambda of", as.character(round(1/lambda, digits=2)) ))
+
+print(paste("And the Sample Variance of", as.character(round(x.var,digits=2)), "approximates the theoretical variance 1/lambda^2 of", as.character(round(1/lambda^2, digits=2)) ))
+```
+
+
+### Distribution of Sample Means
+``` {r echo=FALSE}
+g <- ggplot(dat.avg, aes(x = x, fill='red')) 
+g <- g + geom_histogram(alpha = .25, binwidth=.2, colour = "black", aes(y=..density..)) 
+g <- g + geom_vline(xintercept=x.avg.mean, color="green", size = 1.0) + theme(legend.position="none")
+g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean, sd=sqrt(x.avg.var)),color = "green", size = 1.0)
+g <- g + geom_vline(xintercept=x.avg.mean.theoretical, color="red", size=.5) + theme(legend.position="none")
+g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean.theoretical, sd=sqrt(x.avg.var.theoretical)),color = "red", size = 1.0)
+g <- g + labs(title = "Density Distribution of 1,000 Means of 40  Observations", x= "Means of 40 Observations from a Simulated Exponential Distribution")
+print(g)  
+
+statistics <- c("Mean", "Variance")
+theoretical <- c(x.avg.mean.theoretical, x.avg.var.theoretical)
+simulated <- c(x.avg.mean, x.avg.var)
+df <- data.frame(statistics, theoretical, simulated)
+names(df) <- c("Statistic", "Theoretical Value", "Simulated Value")
+library(knitr)
+kable(df)
+```
+
+### Summary
+
+## Part 2
+
+### Exploratory Plots
+``` {r echo=FALSE}
+library(datasets)
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+
+g <- ggplot(data=ToothGrowth, aes(y=len, x=dose, fill=dose)) + geom_boxplot()
+g <- g + labs(title = "Average Tooth Growth Increases with Dose", x="Dose", y="Length")
+print(g)
+
+g <- ggplot(data=ToothGrowth, aes(y=len, x=supp, fill=supp)) + geom_boxplot()
+g <- g + facet_grid(. ~ dose)
+g <- g + labs(title = "For Lower Doses, Average Growth is Higher for OJ", x="Dose", y="Length")
+print(g)
+
+```
+
+### Hypotheses to Test
+#### At low dose (0.5), with 95% confidence is Orange Juice a more effective delivery mechanism than Vitamin C
+Assumptions: Tooth growth is normally distributed  
+Ho: There is no difference in average growth  
+Ha: Average tooth growth is greater for Orange Juice
+
+``` {r }
+lenOJ <- ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="OJ"]
+lenVC <- ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="VC"]
+t.test(lenOJ, lenVC, alternative = "greater", paired = FALSE, var.equal = TRUE)$p.value
+```
