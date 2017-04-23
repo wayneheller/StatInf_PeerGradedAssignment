@@ -1,0 +1,109 @@
+---
+title: 'Statistical Inference: Peer Graded Assigment - Part 1'
+author: "Wayne Heller"
+date: "April 22, 2017"
+output:
+  word_document: default
+  html_document: default
+  pdf_document:
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts = list(width.cutoff=65), tidy=TRUE, fig.pos = 'H', fig.show = 'asis')
+```
+
+## Overview
+*Part 1 Central Limit Theorem Simulation:* This part of the analysis compares the sample mean and variance for a large number of means of a simulated exponential distribution.  The expected result is that the distribution of means will be Normal with a mean approximately equal to the theoretical mean of the exponential distribution and a variance approximately equal to the theoretical variance of the exponential distribution divided by the number of samples in each group. 
+
+``` {r echo=FALSE}
+        library(ggplot2)
+        library(knitr)
+```
+
+## Simulations
+Create an Exponential distribution with 1,000 simulated observations
+```{r cache=TRUE }
+        
+        seed = 12345
+        nosim <- 1000                 # number of simulated values
+        lambda <-0.2                  # lambda of 0.2 was provided 
+        x.dist <- rexp(nosim, lambda) # simulated exponential distribution
+        dat <- data.frame(x = x.dist) # create a dataframe from the values for plotting
+        x.mean = mean(dat$x)          # mean of the simulated distribution
+        x.var = var(dat$x)            # variance of the simulated distribution
+```
+
+Next, create a distribution of Means from 1,000 simulations of 40 observations each
+```{r cache=TRUE}
+        nsize <- 40                                   # number of observations in 1 simulation
+        x.dist <- rexp(nosim * nsize, lambda)         # simulated exponential distribution
+        x.avg = apply(matrix(x.dist, nosim), 1, mean) # calculates the mean of each simulation
+        dat.avg <- data.frame(x = x.avg)              # putting in a data.frame for plotting
+        x.avg.mean = mean(dat.avg$x)                  # simulated mean
+        x.avg.var = var(dat.avg$x)                    # simulated variance
+        x.avg.mean.theoretical = 1/lambda             # theoretical mean
+        x.avg.var.theoretical = (1/lambda^2)/nsize    # theoretical variance
+```
+
+### Simulated Exponential Distribution With Lambda = 0.2 and 1,000 Observations
+```{r echo=FALSE, fig.cap="Figure 1: Exponential Distribution", fig.show='asis'}
+createFig1 <- function() {
+        
+        g <- ggplot(dat, aes(x = x, fill="red")) 
+        g <- g + geom_histogram(alpha = .20, binwidth=1, colour = "black") 
+        g <- g + geom_vline(xintercept=x.mean) 
+        g <- g + annotate(geom = "text", x=10, y=100, label=paste0("simulated mean=", as.character(round(x.mean,digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        
+        g <- g + annotate(geom = "text", x=10, y=90, label=paste0("theoretical mean=", as.character(round(1/lambda,digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        
+        g <- g + annotate(geom = "text", x=10, y=130, label=paste0("simulated variance=", as.character(round(x.var, digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        
+        g <- g + annotate(geom = "text", x=10, y=120, label=paste0("theoretical variance=", as.character(round(1/lambda^2, digits=2))), size=4, angle=0, vjust=0, hjust=0)
+        g <- g + theme(legend.position="none")
+        g <- g + labs(title = "As expected, the statistics of the simulated distribution are close to the theoretical ")
+        print(g)
+}
+createFig1()
+```
+
+
+### Distribution of Sample Means
+``` {r echo=FALSE,  fig.cap="Figure 2: Distribution of Means"}
+createFig2 <- function() {
+        g <- ggplot(dat.avg, aes(x = x, fill='red')) 
+        g <- g + geom_histogram(alpha = .25, binwidth=.2, color = "black", aes(y=..density..)) 
+        g <- g + geom_vline(xintercept=x.avg.mean, color="green", size = 1.0) + theme(legend.position="none")
+        g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean, sd=sqrt(x.avg.var)),color = "green", size = 1.0)
+        g <- g + geom_vline(xintercept=x.avg.mean.theoretical, color="red", size=.5) 
+        g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean.theoretical, sd=sqrt(x.avg.var.theoretical)),color = "red", size = 1.0)
+        g <- g + labs(title = "Density Distribution of 1,000 Means of 40  Observations", x= "Means of 40 Observations from a Simulated Exponential Distribution")
+        print(g)  
+}
+createFig2()
+```
+
+#### Comparison of Simulated and Theoretical Statistics
+``` {r echo=FALSE}
+statistics <- c("Mean", "Variance")
+theoretical <- c(x.avg.mean.theoretical, x.avg.var.theoretical)
+simulated <- c(x.avg.mean, x.avg.var)
+df <- data.frame(statistics, theoretical, simulated)
+names(df) <- c("Statistic", "Theoretical Value", "Simulated Value")
+kable(df)
+```
+
+### Summary
+Comparing Figure 1 to Figure 2 demonstrates how the distribution of means becomes Gaussian for a large number of simulations.  In addition, the distribution of means from the simulation (the green curve and line in Figure 2) is a close approximation to the theoretical normal distribution with mean = 1/lambda and variance = (1/lambda^2) / n, where n is 40 in this simulation.
+
+
+# APPENDIX
+### Code for Figure 1
+``` {r echo=TRUE}
+    createFig1
+```
+
+### Code for Figure 2
+``` {r echo=TRUE}
+    createFig2
+```

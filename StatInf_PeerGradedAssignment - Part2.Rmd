@@ -1,0 +1,100 @@
+---
+title: 'Statistical Inference: Peer Graded Assigment - Part 2'
+author: "Wayne Heller"
+date: "April 22, 2017"
+output:
+  word_document: default
+  html_document: default
+  pdf_document:
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts = list(width.cutoff=65), tidy=TRUE, fig.pos = 'H', fig.show = 'asis')
+```
+
+## Overview
+*Part 2 Basic Inferential Data Analysis:*  This part of the analysis uses the ToothGrowth data in the R datasets library and compares tooth growth across dosage and delivery mechanisms.  The specific instructions of this assignemnt are to "Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose"
+
+``` {r echo=FALSE}
+        library(ggplot2)
+        library(datasets)
+```
+
+### Exploratory Plots
+``` {r echo=FALSE,  fig.cap="Figure 3: Average Tooth Growth By Dose"}
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+createFig3 <- function() {
+        g <- ggplot(data=ToothGrowth, aes(y=len, x=dose, fill=dose)) + geom_boxplot()
+        g <- g + labs(title = "Average Tooth Growth Increases with Dose", x="Dose", y="Length")
+        print(g)
+}
+createFig3()
+
+```
+
+``` {r echo=FALSE,  fig.cap="Figure 4: Lower Dose Response"}
+createFig4 <- function() {
+        g <- ggplot(data=ToothGrowth, aes(y=len, x=supp, fill=supp)) + geom_boxplot()
+        g <- g + facet_grid(. ~ dose)
+        g <- g + labs(title = "For Lower Doses, Average Growth is Higher for OJ", x="Dose", y="Length")
+        print(g)
+}
+createFig4()
+
+```
+
+### Hypotheses to Test
+#### Overall dosage levels, with 95% confidence is Orange Juice a more effective delivery mechanism than Vitamin C
+Assumptions: Tooth growth is normally distributed  
+Approach: Use Permutation testing to find percentage of results that produce a more extreme difference in averages than was measured  
+Ho: There is no significant difference in tooth growth between Orange Juice and Vitamin C
+Ha: Average tooth growth is greater for Orange Juice
+``` {r echo=TRUE}
+y <- ToothGrowth$len
+group <- ToothGrowth$supp
+testStat <- function(l,g) mean(l[g=="OJ"])- mean(l[g=="VC"])
+observedStat <- testStat(y, group)
+permutations <- sapply(1:10000, function(i) testStat(y, sample(group)))
+observedStat
+mean(permutations > observedStat)
+```
+
+```{r echo=FALSE,  fig.cap="Figure 5: Permutations Analysis"}
+createFig5 <- function() {
+        dat <- data.frame(x=permutations)
+        g <- ggplot(dat, aes(x = x, fill="red")) 
+        g <- g + geom_histogram(alpha = .20, binwidth=1, colour = "black") 
+        g <- g + geom_vline(xintercept=observedStat) 
+        print(g)
+}
+createFig5()
+
+```
+
+#### At low dose (0.5), with 95% confidence is Orange Juice a more effective delivery mechanism than Vitamin C
+Assumptions: Tooth growth is normally distributed  
+Ho: There is no difference in average growth  
+Ha: Average tooth growth is greater for Orange Juice
+
+``` {r }
+lenOJ <- ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="OJ"]
+lenVC <- ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="VC"]
+t.test(lenOJ, lenVC, alternative = "greater", paired = FALSE, var.equal = TRUE)$p.value
+```
+
+# APPENDIX
+### Code for Figure 3
+``` {r echo=TRUE}
+    createFig3
+```
+
+### Code for Figure 4
+``` {r echo=TRUE}
+    createFig4
+```
+
+### Code for Figure 5
+``` {r echo=TRUE}
+    createFig5
+```
