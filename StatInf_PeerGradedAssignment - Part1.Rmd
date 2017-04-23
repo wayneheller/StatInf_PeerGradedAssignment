@@ -71,13 +71,19 @@ createFig1()
 ### Distribution of Sample Means
 ``` {r echo=FALSE,  fig.cap="Figure 2: Distribution of Means"}
 createFig2 <- function() {
-        g <- ggplot(dat.avg, aes(x = x, fill='red')) 
+        g <- ggplot(dat.avg, aes(x = x)) 
+        
         g <- g + geom_histogram(alpha = .25, binwidth=.2, color = "black", aes(y=..density..)) 
-        g <- g + geom_vline(xintercept=x.avg.mean, color="green", size = 1.0) + theme(legend.position="none")
-        g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean, sd=sqrt(x.avg.var)),color = "green", size = 1.0)
-        g <- g + geom_vline(xintercept=x.avg.mean.theoretical, color="red", size=.5) 
-        g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean.theoretical, sd=sqrt(x.avg.var.theoretical)),color = "red", size = 1.0)
-        g <- g + labs(title = "Density Distribution of 1,000 Means of 40  Observations", x= "Means of 40 Observations from a Simulated Exponential Distribution")
+        
+        g <- g + geom_vline(aes(xintercept=x.avg.mean, color="Simulated"), size = 1.0) 
+        
+        g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean, sd=sqrt(x.avg.var)), size = 1.0, aes(color="Simulated"))
+        
+        g <- g + geom_vline(aes(xintercept=x.avg.mean.theoretical, color="Theoretical"), size=.5) 
+        
+        g <- g + stat_function(fun=dnorm,args=list(mean=x.avg.mean.theoretical, sd=sqrt(x.avg.var.theoretical)), aes(color = "Theoretical"), size = 1.0)
+        
+        g <- g + labs(title = "Density Distribution of 1,000 Means of 40  Observations", x= " Means of 40 Observations from a Simulated Exponential Distribution")
         print(g)  
 }
 createFig2()
@@ -94,7 +100,7 @@ kable(df)
 ```
 
 ### Summary
-Comparing Figure 1 to Figure 2 demonstrates how the distribution of means becomes Gaussian for a large number of simulations.  In addition, the distribution of means from the simulation (the green curve and line in Figure 2) is a close approximation to the theoretical normal distribution with mean = 1/lambda and variance = (1/lambda^2) / n, where n is 40 in this simulation.
+Comparing Figure 1 to Figure 2 demonstrates how the distribution of means becomes Gaussian for a large number of simulations.  In addition, the distribution of means from the simulation (the green curve and line in Figure 2) is a close approximation to the theoretical normal distribution with mean = 1/lambda and variance = (1/lambda^2) / n, where n is 40 in this simulation (the red curve and line in Figure 2).
 
 
 # APPENDIX
